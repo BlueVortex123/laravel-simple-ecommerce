@@ -3,8 +3,9 @@
 namespace App\Services;
 
 use App\Models\Product;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use App\Jobs\Products\SendLowStockNotification;
 
 class ProductService
 {
@@ -111,7 +112,44 @@ class ProductService
         }
 
         $product->save();
+        
+        // Check if we need to send low stock notification
+        $this->checkAndSendLowStockNotification($product);
+        
         return $product;
+    }
+
+    /**
+     * Check if product needs low stock notification and dispatch job
+     */
+    private function checkAndSendLowStockNotification(Product $product)
+    {
+        $threshold = config('product.notifications.low_stock_threshold', 20);
+        $autoAlertsEnabled = config('product.notifications.auto_alerts.enabled', false);
+
+        if ($autoAlertsEnabled && $product->stock <= $threshold) {
+            $queue = config('product.notifications.auto_alerts.queue', 'default');
+            $delay = config('product.notifications.auto_alerts.delay_minutes', 0);
+
+            if ($delay > 0) {
+                SendLowStockNotification::dispatch($product)
+                    ->onQueue($queue)
+                    ->delay(now()->addMinutes($delay));
+            } else {
+                SendLowStockNotification::dispatch($product)
+                    ->onQueue($queue);
+            }
+        }
+    }
+
+    /**
+     * Manually send low stock notification for a product
+     */
+    public function sendLowStockNotification($id)
+    {
+        $product = $this->getProductById($id);
+        SendLowStockNotification::dispatch($product);
+        return true;
     }
 
     /**

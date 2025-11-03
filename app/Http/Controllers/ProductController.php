@@ -314,4 +314,25 @@ class ProductController extends Controller
             ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+    /**
+     * Manually send low stock notification for a product
+     */
+    public function sendLowStockNotification($id): JsonResponse
+    {
+        try {
+            $this->productService->sendLowStockNotification($id);
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Low stock notification sent successfully'
+            ], JsonResponse::HTTP_OK);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to send notification',
+                'error' => $e->getMessage()
+            ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }
