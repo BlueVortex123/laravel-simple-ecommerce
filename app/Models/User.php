@@ -46,4 +46,12 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Relationship: User has many Orders
+     */
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
 }
