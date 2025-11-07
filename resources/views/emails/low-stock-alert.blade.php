@@ -288,9 +288,9 @@
             <!-- Product Card -->
             <div class="product-card">
                 @if($product->image)
-                    <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="product-image">
+                    <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}" class="product-image">
                 @else
-                    <img src="{{ asset('storage/SampleProductImage.png') }}" alt="{{ $product->name }}" class="product-image">
+                    <img src="{{ Storage::url('products/SampleProductImage.png') }}" alt="{{ $product->name }}" class="product-image">
                 @endif
                 
                 <div class="product-info">
