@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Order extends Model
 {
-    protected $guarded = ['id',];
+    protected $guarded = ['id'];
 
     protected $casts = [
         'total_amount' => 'decimal:2',
