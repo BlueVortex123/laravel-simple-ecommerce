@@ -2,13 +2,16 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\User;
+use App\Models\Order;
 use App\Models\Product;
+use App\Models\OrderItem;
 use Faker\Factory as Faker;
+use App\Enums\OrderStatusEnum;
+use Illuminate\Database\Seeder;
+use App\Enums\PaymentMethodEnum;
+use App\Enums\PaymentStatusEnum;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class OrderSeeder extends Seeder
 {
@@ -28,9 +31,9 @@ class OrderSeeder extends Seeder
             return;
         }
 
-        $statuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
-        $paymentMethods = ['credit_card', 'paypal', 'bank_transfer', 'cash_on_delivery'];
-        $paymentStatuses = ['pending', 'completed', 'failed', 'refunded'];
+        $statuses = OrderStatusEnum::cases();
+        $paymentMethods = PaymentMethodEnum::cases();
+        $paymentStatuses = PaymentStatusEnum::cases();
 
         // Create 30 sample orders
         for ($i = 1; $i <= 30; $i++) {
