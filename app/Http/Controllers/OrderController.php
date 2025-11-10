@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\Product;
 use App\Services\OrderService;
+use App\Services\TestDataService;
 use Illuminate\Database\Eloquent\Casts\Json;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -50,46 +51,10 @@ class OrderController extends Controller
      */
     public function previewOrder()
     {
-        request()->merge([
-            'user_id' => Auth::id() ?? null,
-            'items' => [
-                [
-                    'product_id' => 1,
-                    'quantity' => 2,
-                ],
-                [
-                    'product_id' => 3,
-                    'quantity' => 1,
-                ],
-            ],
-            'order_data' => [
-                'shipping_address' => [
-                    'first_name' => 'John',
-                    'last_name' => 'Doe',
-                    'company' => 'Tech Corp',
-                    'address_line_1' => '123 Main St',
-                    'address_line_2' => 'Apt 4B',
-                    'city' => 'New York',
-                    'state' => 'NY',
-                    'postal_code' => '10001',
-                    'country' => 'United States',
-                    'phone' => '+1-555-123-4567',
-                ],
-                'billing_address' => [
-                    'first_name' => 'Jane',
-                    'last_name' => 'Smith',
-                    'company' => 'Business LLC',
-                    'address_line_1' => '456 Oak Ave',
-                    'address_line_2' => 'Suite 200',
-                    'city' => 'Buffalo',
-                    'state' => 'NY',
-                    'postal_code' => '14201',
-                    'country' => 'USA',
-                ],
-                'payment_method' => 'credit_card',
-                'notes' => 'Please deliver between 9 AM and 5 PM.',
-            ]
-        ]);
+        // Use TestDataService for sample data (remove in production)
+        $testData = TestDataService::getSampleOrderData();
+        $testData['user_id'] = Auth::id() ?? null;
+        request()->merge($testData);
 
         $items = collect(request()->items);
         $productIds = $items->pluck('product_id');
@@ -97,7 +62,7 @@ class OrderController extends Controller
         $quantityMap = $items->pluck('quantity', 'product_id');
         $orderData = request()->order_data;
 
-        dd(Product::whereIn('id', $productIds)
+        $previewData = Product::whereIn('id', $productIds)
             ->select('id', 'name', 'price')
             ->get()
             // TBD use spatie dtos instead of map function.
@@ -109,12 +74,22 @@ class OrderController extends Controller
                     'unit_price' => $product->price,
                     'quantity' => $quantity,
                     'total_price' => $product->price * $quantity,
-                    'shipping_address' => $orderData['shipping_address'],
-                    'billing_address' => $orderData['billing_address'],
-                    'payment_method' => $orderData['payment_method'],
-                    'notes' => $orderData['notes'],
                 ];
-            }));
+            });
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Order preview generated successfully.',
+            'data' => [
+                'items' => $previewData,
+                'shipping_address' => $orderData['shipping_address'],
+                'billing_address' => $orderData['billing_address'],
+                'payment_method' => $orderData['payment_method'],
+                'notes' => $orderData['notes'],
+                'total_items' => $previewData->count(),
+                'total_amount' => $previewData->sum('total_price'),
+            ]
+        ], 200);
     }
 
     /**
@@ -123,46 +98,10 @@ class OrderController extends Controller
      */
     public function placeOrder(?Request $request = null) // for now
     {
-        request()->merge([
-            'user_id' => Auth::id(),
-            'items' => [
-                [
-                    "product_id" => 2, // iPhone 15 Pro (has stock)
-                    "quantity" => 1,
-                ],
-                [
-                    "product_id" => 3, // Samsung TV (has stock)
-                    "quantity" => 1,
-                ],
-            ],
-            "order_data" => [
-                "shipping_address" =>  [
-                    "first_name" => "John",
-                    "last_name" => "Doe",
-                    "company" => "Tech Corp",
-                    "address_line_1" => "123 Main St",
-                    "address_line_2" => "Apt 4B",
-                    "city" => "New York",
-                    "state" => "NY",
-                    "postal_code" => "10001",
-                    "country" => "United States",
-                    "phone" => "+1-555-123-4567"
-                ],
-                "billing_address" => [
-                    "first_name" => "Jane",
-                    "last_name" => "Smith",
-                    "company" => "Business LLC",
-                    "address_line_1" => "456 Oak Ave",
-                    "address_line_2" => "Suite 200",
-                    "city" => "Buffalo",
-                    "state" => "NY",
-                    "postal_code" => "14201",
-                    "country" => "USA"
-                ],
-                "payment_method" => "credit_card",
-                "notes" => "Please deliver between 9 AM and 5 PM."
-            ]
-        ]);
+        // Use TestDataService for sample data (remove in production)
+        if (!$request || !$request->has('items')) {
+            request()->merge(TestDataService::getSampleOrderData());
+        }
 
         try {
             $validateData = request()->validate([

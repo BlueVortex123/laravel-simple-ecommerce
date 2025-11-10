@@ -2,9 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\User;
+use App\Models\Product;
+use App\Models\OrderItem;
+use App\Enums\OrderStatusEnum;
+use App\Enums\PaymentMethodEnum;
+use App\Enums\PaymentStatusEnum;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Order extends Model
@@ -17,6 +23,10 @@ class Order extends Model
         'billing_address' => 'array',
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
+
+        'status' => OrderStatusEnum::class,
+        'payment_method' => PaymentMethodEnum::class,
+        'payment_status' => PaymentStatusEnum::class,
     ];
 
     /**
