@@ -51,7 +51,7 @@ class TestOrderCommand extends Command
                 return 1;
             }
         } else {
-            $user = User::first();
+            $user = User::inRandomOrder()->first();
             if (!$user) {
                 $this->error("No users found. Please run user seeder first.");
                 return 1;
@@ -59,7 +59,6 @@ class TestOrderCommand extends Command
         }
 
         $this->info("Creating {$count} test order(s) for user: {$user->name} (ID: {$user->id})");
-        $this->info("Test data type: {$type}");
         $this->newLine();
 
         $successCount = 0;
@@ -90,8 +89,8 @@ class TestOrderCommand extends Command
 
         $this->newLine();
         $this->info("Summary:");
-        $this->info("  ✅ Successfully created: {$successCount} orders");
-        $this->info("  ❌ Failed: " . (count($failures)) . " orders");
+        $this->info("Successfully created: {$successCount} orders");
+        $this->info("Failed: " . (count($failures)) . " orders");
 
         if (!empty($failures)) {
             $this->newLine();

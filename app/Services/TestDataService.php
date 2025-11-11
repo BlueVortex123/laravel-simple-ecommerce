@@ -26,7 +26,7 @@ class TestDataService
      */
     public static function getSampleItems(): array
     {
-        $availableProducts = Product::where('stock', '>', 0)->take(3)->get();
+        $availableProducts = Product::where('stock', '>', 1)->take(rand(1, 5))->get();
         
         if ($availableProducts->isEmpty()) {
             // Fallback to any products if no stock available
@@ -34,7 +34,7 @@ class TestDataService
         }
 
         $items = [];
-        foreach ($availableProducts->take(2) as $index => $product) {
+        foreach ($availableProducts as $index => $product) {
             $items[] = [
                 'product_id' => $product->id,
                 'quantity' => $index === 0 ? 1 : 2, // Vary quantities
@@ -62,17 +62,19 @@ class TestDataService
      */
     public static function getSampleShippingAddress(): array
     {
+        $faker = \Faker\Factory::create();
+        
         return [
-            'first_name' => 'John',
-            'last_name' => 'Doe',
-            'company' => 'Tech Solutions Inc',
-            'address_line_1' => '123 Innovation Drive',
-            'address_line_2' => 'Suite 200',
-            'city' => 'San Francisco',
-            'state' => 'CA',
-            'postal_code' => '94105',
+            'first_name' => $faker->firstName,
+            'last_name' => $faker->lastName,
+            'company' => $faker->company,
+            'address_line_1' => $faker->streetAddress,
+            'address_line_2' => $faker->optional()->secondaryAddress,
+            'city' => $faker->city,
+            'state' => $faker->stateAbbr,
+            'postal_code' => $faker->postcode,
             'country' => 'United States',
-            'phone' => '+1-555-123-4567',
+            'phone' => $faker->phoneNumber,
         ];
     }
 
@@ -81,15 +83,17 @@ class TestDataService
      */
     public static function getSampleBillingAddress(): array
     {
+        $faker = \Faker\Factory::create();
+        
         return [
-            'first_name' => 'Jane',
-            'last_name' => 'Smith',
-            'company' => 'Business Consulting LLC',
-            'address_line_1' => '456 Commerce Street',
-            'address_line_2' => 'Floor 15',
-            'city' => 'New York',
-            'state' => 'NY',
-            'postal_code' => '10001',
+            'first_name' => $faker->firstName,
+            'last_name' => $faker->lastName,
+            'company' => $faker->company,
+            'address_line_1' => $faker->streetAddress,
+            'address_line_2' => $faker->optional()->secondaryAddress,
+            'city' => $faker->city,
+            'state' => $faker->stateAbbr,
+            'postal_code' => $faker->postcode,
             'country' => 'United States',
         ];
     }
