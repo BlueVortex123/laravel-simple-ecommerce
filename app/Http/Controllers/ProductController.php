@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use Inertia\Inertia;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use App\Services\ProductService;
-use Illuminate\Database\Eloquent\Casts\Json;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Database\Eloquent\Casts\Json;
 use Illuminate\Validation\ValidationException;
 
 class ProductController extends Controller
@@ -17,28 +19,47 @@ class ProductController extends Controller
         $this->productService = $productService;
     }
 
-    /**
-     * Display a listing of products
-     */
-    public function index(Request $request): JsonResponse
+   public function index(Request $request): \Inertia\Response
     {
-        try {
-            $perPage = $request->get('per_page', 15);
-            $search = $request->get('search');
-            
-            $products = $this->productService->getAllProducts($perPage, $search);
-            
-            return response()->json([
-                'status' => 'success',
-                'data' => $products,
-            ], JsonResponse::HTTP_OK);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to retrieve products',
-                'error' => $e->getMessage()
-            ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+        $perPage = 10;
+        $search = $request->get('search', '');
+        $page = $request->get('page', 1);
+        $sortColumn = $request->get('sort', 'created_at');
+        $sortDirection = $request->get('direction', 'desc');
+
+        $query = Product::select('id', 'name', 'description', 'price', 'stock', 'created_at');
+
+        // Apply search filter
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('description', 'like', '%' . $search . '%')
+                  ->orWhere('id', 'like', '%' . $search . '%')
+                  ->orWhere('price', 'like', '%' . $search . '%');
+            });
         }
+
+        // Apply sorting
+        $query->orderBy($sortColumn, $sortDirection);
+
+        $paginatedProducts = $query->paginate($perPage, ['*'], 'page', $page);
+
+        return Inertia::render('Products/Index', [
+            'products' => $paginatedProducts->items(),
+            'pagination' => [
+                'current_page' => $paginatedProducts->currentPage(),
+                'last_page' => $paginatedProducts->lastPage(),
+                'total' => $paginatedProducts->total(),
+                'per_page' => $paginatedProducts->perPage(),
+                'from' => $paginatedProducts->firstItem(),
+                'to' => $paginatedProducts->lastItem(),
+            ],
+            'filters' => [
+                'search' => $search,
+                'sort' => $sortColumn,
+                'direction' => $sortDirection,
+            ]
+        ]);
     }
 
     /**

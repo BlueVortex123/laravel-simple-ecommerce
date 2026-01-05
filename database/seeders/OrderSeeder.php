@@ -57,6 +57,7 @@ class OrderSeeder extends Seeder
             
             $order = Order::create([
                 'user_id' => $user->id,
+                'order_number' => strtoupper($faker->bothify('ORD-#####')),
                 'status' => $status,
                 'shipping_address' => $shippingAddress,
                 'billing_address' => $faker->boolean(70) ? $shippingAddress : null,

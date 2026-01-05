@@ -28,7 +28,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // Public routes (no authentication required)
-Route::get('/products', [ProductController::class, 'index']); // GET /api/products - Browse products
+Route::get('/products', [ProductController::class, 'index'])->name('products.index'); // GET /api/products - Browse products
 Route::get('/products/{id}', [ProductController::class, 'show']); // GET /api/products/{id} - View product details
 Route::get('/products/filter/price-range', [ProductController::class, 'byPriceRange']); // Filter products by price
 
