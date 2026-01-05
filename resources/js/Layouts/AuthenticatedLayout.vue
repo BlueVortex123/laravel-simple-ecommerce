@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
-import { HomeIcon, CubeIcon, ChevronDoubleLeftIcon, ChevronDoubleRightIcon, ClipboardDocumentListIcon } from "@heroicons/vue/24/outline";
+import { HomeIcon, CubeIcon, ChevronDoubleLeftIcon, ChevronDoubleRightIcon, ClipboardDocumentListIcon, UsersIcon } from "@heroicons/vue/24/outline";
 
 
 const sidebarOpen = ref(true);
@@ -10,6 +10,7 @@ const navigationItems = [
     { name: 'Dashboard', route: '/dashboard', icon: HomeIcon },
     { name: 'Products', route: '/products', icon: CubeIcon },
     { name: 'Orders', route: '/orders', icon: ClipboardDocumentListIcon },
+    { name: 'Users', route: '/users', icon: UsersIcon },
 ];
 
 const isActiveRoute = (route) => {

@@ -7,6 +7,7 @@ use Illuminate\Foundation\Application;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -43,6 +44,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/products/analytics/statistics', [ProductController::class, 'statistics']); // Admin analytics
 
     Route::get('/orders/all', [OrderController::class, 'allOrders']); // View all orders (admin only)
+    
+    // User management routes (admin only)
+    Route::get('/users', [UserController::class, 'index'])->name('users.index'); // View all users
+    Route::get('/users/{id}', [UserController::class, 'show']); // View user details
+    Route::post('/users/{id}/roles', [UserController::class, 'updateRoles']); // Update user roles
+    Route::post('/users/{id}/toggle-status', [UserController::class, 'toggleStatus']); // Toggle user status
 });
 
 // Authenticated user routes (customers can view stock, admins can update)
