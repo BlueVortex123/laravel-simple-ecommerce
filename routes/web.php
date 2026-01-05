@@ -74,3 +74,5 @@ Route::get('/test/email', function () {
         'adminDashboardUrl' => url('/admin/products'),
     ]);
 });
+
+require __DIR__.'/auth.php';
