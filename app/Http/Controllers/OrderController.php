@@ -35,13 +35,62 @@ class OrderController extends Controller
      * Display a listing of the current auth user's orders.
      * This method is used only by the authenticated user.
      */
-    public function userOrders()
+    public function userOrders(Request $request)
     {
-        $orders = Order::where('user_id', Auth::id())->lazy();
-        return response()->json([
-            'status' => 'success',
-            'data' => $orders,
-        ], 200);
+        $perPage = 10;
+        $search = $request->get('search', '');
+        $page = $request->get('page', 1);
+        $sortColumn = $request->get('sort', 'created_at');
+        $sortDirection = $request->get('direction', 'desc');
+
+        $query = Order::select('id', 'order_number', 'status', 'total_amount', 'payment_status', 'created_at')
+            ->with('user:id,name,email');
+            // ->where('user_id', Auth::id()); // Wip: admin should see all orders and normal users only their own
+
+        // Apply search filter
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('order_number', 'like', '%' . $search . '%')
+                  ->orWhere('status', 'like', '%' . $search . '%')
+                  ->orWhere('payment_status', 'like', '%' . $search . '%')
+                  ->orWhere('total_amount', 'like', '%' . $search . '%');
+            });
+        }
+
+        // Apply sorting
+        $query->orderBy($sortColumn, $sortDirection);
+
+        $paginatedOrders = $query->paginate($perPage, ['*'], 'page', $page);
+
+        // For initial page load, also send all orders for client-side pagination fallback
+        $responseData = [
+            'orders' => $paginatedOrders->items(),
+            'pagination' => [
+                'current_page' => $paginatedOrders->currentPage(),
+                'last_page' => $paginatedOrders->lastPage(),
+                'total' => $paginatedOrders->total(),
+                'per_page' => $paginatedOrders->perPage(),
+                'from' => $paginatedOrders->firstItem(),
+                'to' => $paginatedOrders->lastItem(),
+            ],
+            'filters' => [
+                'search' => $search,
+                'sort' => $sortColumn,
+                'direction' => $sortDirection,
+            ]
+        ];
+
+        // On initial load (no AJAX request), also provide allOrders for fallback
+        if (!$request->header('X-Inertia')) {
+            $responseData['allOrders'] = Order::select('id', 'order_number', 'status', 'total_amount', 'payment_status', 'created_at')
+                ->with('user:id,name,email')
+                ->where('user_id', Auth::id())
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->toArray();
+        }
+
+        return \Inertia\Inertia::render('Orders/Index', $responseData);
     }
 
     /**

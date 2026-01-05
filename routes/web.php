@@ -50,7 +50,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/products/stock/low', [ProductController::class, 'lowStock']); // View low stock products
     Route::patch('/products/{id}/stock', [ProductController::class, 'updateStock'])->middleware('admin'); // Update stock (admin only)
 
-    Route::get('/orders', [OrderController::class, 'userOrders']); 
+    Route::get('/orders', [OrderController::class, 'userOrders'])->name('orders.index'); 
     Route::post('/order', [OrderController::class, 'placeOrder']); // Place order
     Route::get('/order/{id}', [OrderController::class, 'viewOrder']); // View order details
     Route::post('/order/{id}/cancel', [OrderController::class, 'cancelOrder']);
