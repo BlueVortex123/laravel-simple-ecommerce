@@ -44,7 +44,8 @@ class ProductController extends Controller
 
         $paginatedProducts = $query->paginate($perPage, ['*'], 'page', $page);
 
-        return Inertia::render('Products/Index', [
+        // For initial page load, also send all products for client-side pagination fallback
+        $responseData = [
             'products' => $paginatedProducts->items(),
             'pagination' => [
                 'current_page' => $paginatedProducts->currentPage(),
@@ -59,7 +60,17 @@ class ProductController extends Controller
                 'sort' => $sortColumn,
                 'direction' => $sortDirection,
             ]
-        ]);
+        ];
+
+        // On initial load (no AJAX request), also provide allProducts for fallback
+        if (!$request->header('X-Inertia')) {
+            $responseData['allProducts'] = Product::select('id', 'name', 'description', 'price', 'stock', 'created_at')
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->toArray();
+        }
+
+        return Inertia::render('Products/Index', $responseData);
     }
 
     /**
@@ -140,35 +151,37 @@ class ProductController extends Controller
     /**
      * Show the form for editing the specified product
      */
-    public function edit($id): JsonResponse
+    public function edit($id): \Inertia\Response
     {
         try {
             $product = $this->productService->getProductById($id);
             
-            return response()->json([
-                'status' => 'success',
-                'data' => $product,
-                'editable_fields' => [
-                    'name' => 'string (max: 255)',
-                    'description' => 'text (optional)',
-                    'price' => 'decimal (format: 99999999.99)',
-                    'stock' => 'integer (min: 0)',
-                    'image' => 'file (optional, image format)'
-                ]
-            ], JsonResponse::HTTP_OK);
+            // Ensure we have all the product attributes
+            $productData = [
+                'id' => $product->id,
+                'name' => $product->name,
+                'description' => $product->description,
+                'price' => $product->price,
+                'stock' => $product->stock,
+                'image' => $product->image,
+                'created_at' => $product->created_at,
+                'updated_at' => $product->updated_at,
+            ];
+            
+            return Inertia::render('Products/Edit', [
+                'product' => $productData
+            ]);
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Product not found',
-                'error' => $e->getMessage()
-            ], JsonResponse::HTTP_NOT_FOUND);
+            return Inertia::render('Products/Index', [
+                'error' => 'Product not found: ' . $e->getMessage()
+            ]);
         }
     }
 
     /**
      * Update the specified product
      */
-    public function update(Request $request, $id): JsonResponse
+    public function update(Request $request, $id)
     {
         try {
             $validatedData = $request->validate([
@@ -181,23 +194,16 @@ class ProductController extends Controller
 
             $product = $this->productService->updateProduct($id, $validatedData);
 
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Product updated successfully',
-                'data' => $product
-            ], JsonResponse::HTTP_OK);
+            return redirect()->route('products.index')
+                ->with('success', 'Product updated successfully');
         } catch (ValidationException $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->withInput();
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to update product',
-                'error' => $e->getMessage()
-            ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+            return redirect()->back()
+                ->with('error', 'Failed to update product: ' . $e->getMessage())
+                ->withInput();
         }
     }
 

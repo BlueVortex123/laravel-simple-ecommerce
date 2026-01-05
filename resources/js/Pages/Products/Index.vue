@@ -11,6 +11,7 @@ import {
   DocumentMagnifyingGlassIcon,
   CubeIcon,
   EyeIcon,
+  PencilIcon,
 
 } from "@heroicons/vue/24/solid";
 
@@ -146,6 +147,13 @@ const formatDate = (dateString) => {
   return `${order_date.getDate()}-${order_date.getMonth() + 1
     }-${order_date.getFullYear()} ${order_date.getHours()}:${order_date.getMinutes()}:${order_date.getSeconds()}`;
 };
+
+// View product function (placeholder)
+const viewProduct = (id) => {
+  // Navigate to product show page when implemented
+  console.log('View product:', id);
+  // router.get(route('products.show', id));
+};
 </script>
 
 <template>
@@ -221,7 +229,23 @@ const formatDate = (dateString) => {
                     <button @click="sortBy('name')" class="flex items-center justify-between w-full text-black">
                       Name
                       <ArrowsUpDownIcon class="w-4 h-4" :class="{
-                        'text-blue-500': sortColumn === 'client_email',
+                        'text-blue-500': sortColumn === 'name',
+                      }" />
+                    </button>
+                  </th>
+                  <th class="w-2/12 py-2 px-4 border-b">
+                    <button @click="sortBy('price')" class="flex items-center justify-between w-full text-black">
+                      Price
+                      <ArrowsUpDownIcon class="w-4 h-4" :class="{
+                        'text-blue-500': sortColumn === 'price',
+                      }" />
+                    </button>
+                  </th>
+                  <th class="w-1/12 py-2 px-4 border-b">
+                    <button @click="sortBy('stock')" class="flex items-center justify-between w-full text-black">
+                      Stock
+                      <ArrowsUpDownIcon class="w-4 h-4" :class="{
+                        'text-blue-500': sortColumn === 'stock',
                       }" />
                     </button>
                   </th>
@@ -243,7 +267,15 @@ const formatDate = (dateString) => {
                     {{ item.name }}
                   </td>
                   <td class="py-0 px-4 border-b">
-                    {{ item.created_at }}
+                    ${{ parseFloat(item.price).toFixed(2) }}
+                  </td>
+                  <td class="py-0 px-4 border-b">
+                    <span class="badge" :class="item.stock <= 10 ? 'badge-warning' : 'badge-success'">
+                      {{ item.stock }}
+                    </span>
+                  </td>
+                  <td class="py-0 px-4 border-b">
+                    {{ formatDate(item.created_at) }}
                   </td>
                   <td class="py-0 px-4 border-b">
                     <div class="dropdown dropdown-left">
@@ -253,10 +285,16 @@ const formatDate = (dateString) => {
                       <ul tabindex="0"
                         class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow-lg dropdown-top">
                         <li>
-                          <NavLink :href="`/orders/show/${item.id}`">
-                            <EyeIcon class="w-6 h-6" />
-                            <span class="ml-4">View</span>
+                          <NavLink :href="route('products.edit', item.id)">
+                            <PencilIcon class="w-4 h-4" />
+                            <span class="ml-2">Edit</span>
                           </NavLink>
+                        </li>
+                        <li>
+                          <a href="#" @click.prevent="viewProduct(item.id)">
+                            <EyeIcon class="w-4 h-4" />
+                            <span class="ml-2">View</span>
+                          </a>
                         </li>
                       </ul>
                     </div>
