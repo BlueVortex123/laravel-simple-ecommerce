@@ -11,12 +11,12 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         then: function () {
             // Only load test routes in non-production environments
-            if (!app()->environment('production')) {
-                Route::middleware('web')
-                     ->group(base_path('routes/test.php'));
+            // if (!app()->environment('production')) {
+            //     Route::middleware('web')
+            //          ->group(base_path('routes/test.php'));
 
                 
-            }
+            // }
         },
         health: '/up',
     )

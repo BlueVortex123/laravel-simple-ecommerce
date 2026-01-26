@@ -157,7 +157,6 @@ const viewProduct = (id) => {
 </script>
 
 <template>
-
   <Head title="Products" />
 
   <AuthenticatedLayout>
@@ -207,7 +206,7 @@ const viewProduct = (id) => {
         </div>
         <div class="flex items-center text-black">
           <div class="form-control">
-            <input type="text" placeholder="Search" class="input border-b w-24 md:w-auto input-sm text-black"
+            <input type="text" placeholder="Search products..." class="input border-b w-24 md:w-auto input-sm text-black"
               v-model="searchQuery" @input="performSearch" />
           </div>
         </div>
@@ -262,22 +261,22 @@ const viewProduct = (id) => {
               </thead>
               <tbody>
                 <tr v-for="item in currentProducts" :key="item.id">
-                  <td class="py-0 px-4 border-b">{{ item.id }}</td>
-                  <td class="py-0 px-4 border-b">
+                  <td class="py-2 px-4 border-b">#{{ item.id }}</td>
+                  <td class="py-2 px-4 border-b font-medium">
                     {{ item.name }}
                   </td>
-                  <td class="py-0 px-4 border-b">
+                  <td class="py-2 px-4 border-b font-semibold">
                     ${{ parseFloat(item.price).toFixed(2) }}
                   </td>
-                  <td class="py-0 px-4 border-b">
-                    <span class="badge" :class="item.stock > 10 ? 'badge-success' : (item.stock > 0 ? 'badge-warning' : 'badge-error')">
+                  <td class="py-2 px-4 border-b">
+                    <span class="badge badge-sm" :class="item.stock > 10 ? 'badge-success' : (item.stock > 0 ? 'badge-warning' : 'badge-error')">
                       {{ item.stock }}
                     </span>
                   </td>
-                  <td class="py-0 px-4 border-b">
+                  <td class="py-2 px-4 border-b text-sm">
                     {{ formatDate(item.created_at) }}
                   </td>
-                  <td class="py-0 px-4 border-b">
+                  <td class="py-2 px-4 border-b">
                     <div class="dropdown dropdown-left">
                       <div tabindex="0" role="button" class="btn btn-info m-1 btn-sm text-white">
                         Actions
@@ -305,7 +304,15 @@ const viewProduct = (id) => {
           </div>
         </div>
       </div>
-      <nav class="flex items-center justify-center mt-4">
+      
+      <!-- Show message if no products -->
+      <div v-if="currentProducts.length === 0" class="text-center py-12">
+        <CubeIcon class="w-16 h-16 mx-auto text-gray-400 mb-4" />
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No products found</h3>
+        <p class="text-gray-500">No products available in the inventory.</p>
+      </div>
+      
+      <nav class="flex items-center justify-center mt-4" v-if="currentProducts.length > 0">
         <div class="join">
           <button class="join-item btn btn-sm" :disabled="currentPage === 1 || isLoading"
             @click="goToPage(currentPage - 1)">

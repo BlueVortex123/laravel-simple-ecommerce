@@ -224,44 +224,9 @@ class OrderController extends Controller
                 $order = $query->where('user_id', $user->id)->findOrFail($id);
             }
             
-            return response()->json([
-                'status' => 'success',
-                'data' => [
-                    'id' => $order->id,
-                    'order_number' => $order->order_number,
-                    'status' => $order->status,
-                    'payment_status' => $order->payment_status,
-                    'total_amount' => $order->total_amount,
-                    'shipping_address' => $order->shipping_address,
-                    'billing_address' => $order->billing_address,
-                    'payment_method' => $order->payment_method,
-                    'notes' => $order->notes,
-                    'created_at' => $order->created_at,
-                    'shipped_at' => $order->shipped_at,
-                    'delivered_at' => $order->delivered_at,
-                    'customer' => [
-                        'id' => $order->user->id,
-                        'name' => $order->user->name,
-                        'email' => $order->user->email,
-                    ],
-                    'order_items' => $order->orderItems->map(function ($item) {
-                        return [
-                            'id' => $item->id,
-                            'product_id' => $item->product_id,
-                            'product_name' => $item->product->name ?? $item->product_snapshot['name'] ?? 'Unknown Product',
-                            'quantity' => $item->quantity,
-                            'unit_price' => $item->unit_price,
-                            'total_price' => $item->total_price,
-                            'product_snapshot' => $item->product_snapshot,
-                        ];
-                    }),
-                    'summary' => [
-                        'subtotal' => $order->orderItems->sum('total_price'),
-                        'total_amount' => $order->total_amount,
-                        'items_count' => $order->orderItems->count(),
-                    ]
-                ]
-            ], JsonResponse::HTTP_OK);
+            return \Inertia\Inertia::render('Orders/Show', [
+                'order' => $order
+            ]);
             
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([

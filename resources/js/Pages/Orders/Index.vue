@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { ref, defineProps, computed } from 'vue';
 import NavLink from "@/Components/NavLink.vue";
+import { useOrderStatus } from '@/Composables/useOrderStatus.js';
 import {
   ArrowUpCircleIcon,
   HomeIcon,
@@ -10,10 +11,6 @@ import {
   ClipboardDocumentListIcon,
   EyeIcon,
   XCircleIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  TruckIcon,
-  CurrencyDollarIcon,
 } from "@heroicons/vue/24/solid";
 
 //  Instantiating the props
@@ -35,6 +32,14 @@ const props = defineProps({
     default: () => ({ search: '', sort: 'created_at', direction: 'desc' })
   }
 });
+
+// Use the order status composable
+const {
+  getStatusBadgeClassDaisy: getStatusBadgeClass,
+  getPaymentStatusBadgeClassDaisy: getPaymentStatusBadgeClass,
+  getStatusIcon,
+  formatDateIndex: formatDate
+} = useOrderStatus();
 
 // Declaring the reactive variables:
 const ordersPerPage = 10;
@@ -142,56 +147,6 @@ const sortBy = (column) => {
   fetchOrders({ page: 1, sort: sortColumn.value, direction: sortDirection.value });
 };
 
-// Format date function
-const formatDate = (dateString) => {
-  const order_date = new Date(dateString);
-  return `${order_date.getDate()}-${order_date.getMonth() + 1
-    }-${order_date.getFullYear()} ${order_date.getHours()}:${order_date.getMinutes()}:${order_date.getSeconds()}`;
-};
-
-// Declare functions to get status badges and icons
-
-// Get status badge class
-const getStatusBadgeClass = (status) => {
-  const statusClasses = {
-    'pending': 'badge-warning',
-    'processing': 'badge-info',
-    'shipped': 'badge-primary',
-    'delivered': 'badge-success',
-    'cancelled': 'badge-error',
-    'refunded': 'badge-secondary'
-  };
-  return statusClasses[status] || 'badge-neutral';
-};
-
-// Get payment status badge class
-const getPaymentStatusBadgeClass = (paymentStatus) => {
-  const statusClasses = {
-    'pending': 'badge-warning',
-    'completed': 'badge-success',
-    'failed': 'badge-error',
-    'refunded': 'badge-secondary'
-  };
-  return statusClasses[paymentStatus] || 'badge-neutral';
-};
-
-// Get status icon
-const getStatusIcon = (status) => {
-  const icons = {
-    'pending': ClockIcon,
-    'processing': ArrowUpCircleIcon,
-    'shipped': TruckIcon,
-    'delivered': CheckCircleIcon,
-    'cancelled': XCircleIcon,
-    'refunded': CurrencyDollarIcon
-  };
-  return icons[status] || ClockIcon;
-};
-
-const viewOrder = (id) => {
-  // Navigate to order show page when implemented
-  console.log('View order:', id);
-};
 </script>
 
 <template>
@@ -338,10 +293,10 @@ const viewOrder = (id) => {
                       <ul tabindex="0"
                         class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow-lg dropdown-top">
                         <li>
-                          <a href="#" @click.prevent="viewOrder(item.id)">
+                          <NavLink :href="route('orders.show', item.id)">
                             <EyeIcon class="w-4 h-4" />
                             <span class="ml-2">View Details</span>
-                          </a>
+                          </NavLink>
                         </li>
                         <li v-if="item.status === 'pending'">
                           <a href="#" @click.prevent="console.log('Cancel order:', item.id)" class="text-red-600">

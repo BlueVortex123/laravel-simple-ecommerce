@@ -59,7 +59,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/orders', [OrderController::class, 'userOrders'])->name('orders.index'); 
     Route::post('/order', [OrderController::class, 'placeOrder']); // Place order
-    Route::get('/order/{id}', [OrderController::class, 'viewOrder']); // View order details
+    Route::get('/order/{id}', [OrderController::class, 'viewOrder'])->name('orders.show');
     Route::post('/order/{id}/cancel', [OrderController::class, 'cancelOrder']);
 });
 
