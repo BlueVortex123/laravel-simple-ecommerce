@@ -24,7 +24,7 @@ class OrderController extends Controller
     {
         // Check if the user is admin (handled by middleware)
         // If admin, retrieve all orders
-        $orders = Order::lazy();
+        $orders = Order::with('lastStatusLine.status')->lazy();
         return response()->json([
             'status' => 'success',
             'data' => $orders,
@@ -43,15 +43,15 @@ class OrderController extends Controller
         $sortColumn = $request->get('sort', 'created_at');
         $sortDirection = $request->get('direction', 'desc');
 
-        $query = Order::select('id', 'order_number', 'status', 'total_amount', 'payment_status', 'created_at')
-            ->with('user:id,name,email');
+        $query = Order::select('id', 'order_number', 'total_amount', 'payment_status', 'created_at')
+            ->with(['user:id,name,email', 'lastOrderStatus:id,name']);
             // ->where('user_id', Auth::id()); // Wip: admin should see all orders and normal users only their own
 
         // Apply search filter
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
-                $q->where('order_number', 'like', '%' . $search . '%')
-                  ->orWhere('status', 'like', '%' . $search . '%')
+                                $q->where('order_number', 'like', '%' . $search . '%')
+                                    ->orWhereHas('lastOrderStatus', function ($q2) use ($search) { $q2->where('name', 'like', '%' . $search . '%'); })
                   ->orWhere('payment_status', 'like', '%' . $search . '%')
                   ->orWhere('total_amount', 'like', '%' . $search . '%');
             });
@@ -82,8 +82,8 @@ class OrderController extends Controller
 
         // On initial load (no AJAX request), also provide allOrders for fallback
         if (!$request->header('X-Inertia')) {
-            $responseData['allOrders'] = Order::select('id', 'order_number', 'status', 'total_amount', 'payment_status', 'created_at')
-                ->with('user:id,name,email')
+            $responseData['allOrders'] = Order::select('id', 'order_number', 'total_amount', 'payment_status', 'created_at')
+                ->with(['user:id,name,email', 'lastOrderStatus:id,name'])
                 ->where('user_id', Auth::id())
                 ->orderBy('created_at', 'desc')
                 ->get()
@@ -214,7 +214,9 @@ class OrderController extends Controller
                 ], JsonResponse::HTTP_UNAUTHORIZED);
             }
             
-            $query = Order::with(['orderItems.product', 'user']);            
+            $query = Order::with(['orderItems.product', 'user', 'statusLines.status' => function ($q) {
+                $q->orderBy('created_at');
+            }]);            
             
             // If user is admin, they can access any order
             if ($user->hasRole('admin')) {

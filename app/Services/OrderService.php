@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\OrderStatusLine;
+use App\Models\OrderStatus;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
@@ -46,9 +48,15 @@ class OrderService
                 'billing_address' => $orderData['billing_address'] ?? null,
                 'payment_method' => $orderData['payment_method'],
                 'payment_status' => 'pending',
-                'status' => 'pending',
+                // `status` column removed; we will initialize last_order_status via status lines
                 'notes' => $orderData['notes'] ?? null,
             ]);
+
+            // Initialize order status: create an initial status line for 'pending' if available
+            $pending = OrderStatus::where('name', 'pending')->first();
+            if ($pending) {
+                $this->addStatusLine($order, $pending->id);
+            }
 
             // Second pass: create order items and update stock
             foreach ($items as $item) {
@@ -74,6 +82,36 @@ class OrderService
             }
 
             return $order->load(['orderItems.product', 'user']);
+        });
+    }
+
+    /**
+     * Add a status line for an order and update the denormalized last status on orders.
+     * This is performed in a transaction to keep data consistent.
+     *
+     * @param  Order|int  $order
+     * @param  int  $orderStatusId
+     * @return OrderStatusLine
+     */
+    public function addStatusLine($order, int $orderStatusId): OrderStatusLine
+    {
+        return DB::transaction(function () use ($order, $orderStatusId) {
+            $orderModel = $order instanceof Order ? $order : Order::findOrFail($order);
+
+            $status = OrderStatus::findOrFail($orderStatusId);
+
+            $line = OrderStatusLine::create([
+                'order_id' => $orderModel->id,
+                'order_status_id' => $orderStatusId,
+            ]);
+
+            // Update denormalized last status id and the orders.status enum/value
+            $orderModel->last_order_status_id = $orderStatusId;
+            // keep `status` in sync (store the canonical name)
+            $orderModel->status = $status->name;
+            $orderModel->save();
+
+            return $line->load('status');
         });
     }
 }

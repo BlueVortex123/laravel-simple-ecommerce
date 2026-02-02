@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
+use Illuminate\Database\Eloquent\Relations\HasOne;
+
 class Order extends Model
 {
     protected $guarded = ['id'];
@@ -24,7 +26,6 @@ class Order extends Model
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
 
-        'status' => OrderStatusEnum::class,
         'payment_method' => PaymentMethodEnum::class,
         'payment_status' => PaymentStatusEnum::class,
     ];
@@ -63,6 +64,30 @@ class Order extends Model
     }
 
     /**
+     * Relationship: Order has many status lines (history)
+     */
+    public function statusLines(): HasMany
+    {
+        return $this->hasMany(OrderStatusLine::class);
+    }
+
+    /**
+     * Relationship: latest status line for this order (single row)
+     */
+    public function lastStatusLine(): HasOne
+    {
+        return $this->hasOne(OrderStatusLine::class)->latestOfMany();
+    }
+
+    /**
+     * Denormalized relation: the last status as a lookup to `order_statuses`.
+     */
+    public function lastOrderStatus(): BelongsTo
+    {
+        return $this->belongsTo(OrderStatus::class, 'last_order_status_id');
+    }
+
+    /**
      * Relationship: Order has many Products through OrderItems
      */
     public function products(): BelongsToMany
@@ -93,7 +118,8 @@ class Order extends Model
      */
     public function canBeCancelled(): bool
     {
-        return in_array($this->status, ['pending', 'processing']);
+        $status = $this->lastOrderStatus?->name ?? 'pending';
+        return in_array($status, ['pending', 'processing']);
     }
 
     /**
@@ -101,6 +127,6 @@ class Order extends Model
      */
     public function isCompleted(): bool
     {
-        return $this->status === 'delivered';
+        return ($this->lastOrderStatus?->name ?? '') === 'delivered';
     }
 }
