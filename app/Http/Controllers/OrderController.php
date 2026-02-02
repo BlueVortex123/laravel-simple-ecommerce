@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Product;
+use Illuminate\Http\Request;
 use App\Services\OrderService;
 use App\Services\TestDataService;
-use Illuminate\Database\Eloquent\Casts\Json;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\JsonResponse;
+use App\Resources\OrderViewResource;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Casts\Json;
 
 class OrderController extends Controller
 {
@@ -43,7 +44,7 @@ class OrderController extends Controller
         $sortColumn = $request->get('sort', 'created_at');
         $sortDirection = $request->get('direction', 'desc');
 
-        $query = Order::select('id', 'order_number', 'total_amount', 'payment_status', 'created_at')
+        $query = Order::select('id', 'order_number', 'total_amount', 'payment_status', 'last_order_status_id','created_at')
             ->with(['user:id,name,email', 'lastOrderStatus:id,name']);
             // ->where('user_id', Auth::id()); // Wip: admin should see all orders and normal users only their own
 
@@ -61,6 +62,11 @@ class OrderController extends Controller
         $query->orderBy($sortColumn, $sortDirection);
 
         $paginatedOrders = $query->paginate($perPage, ['*'], 'page', $page);
+        // Attach a simple `status` attribute (last order status name) to each order
+        $paginatedOrders->getCollection()->transform(function ($order) {
+            $order->status = $order->lastOrderStatus?->name ?? $order->last_status ?? 'pending';
+            return $order;
+        });
 
         // For initial page load, also send all orders for client-side pagination fallback
         $responseData = [
@@ -87,9 +93,12 @@ class OrderController extends Controller
                 ->where('user_id', Auth::id())
                 ->orderBy('created_at', 'desc')
                 ->get()
-                ->toArray();
+                ->map(function ($order) {
+                    $arr = $order->toArray();
+                    $arr['status'] = $order->lastOrderStatus?->name ?? $order->last_status ?? 'pending';
+                    return $arr;
+                })->toArray();
         }
-
         return \Inertia\Inertia::render('Orders/Index', $responseData);
     }
 
@@ -214,10 +223,16 @@ class OrderController extends Controller
                 ], JsonResponse::HTTP_UNAUTHORIZED);
             }
             
-            $query = Order::with(['orderItems.product', 'user', 'statusLines.status' => function ($q) {
-                $q->orderBy('created_at');
-            }]);            
-            
+            $query = Order::with([
+                'orderItems.product',
+                'user:id,name,email',
+                'statusLines' => function ($q) {
+                    $q->orderBy('created_at')->with(['status' => function ($q2) {
+                        $q2->select('id', 'name');
+                    }]);
+                },
+            ]);
+
             // If user is admin, they can access any order
             if ($user->hasRole('admin')) {
                 $order = $query->findOrFail($id);
@@ -225,9 +240,12 @@ class OrderController extends Controller
                 // If not admin, user can only access their own orders
                 $order = $query->where('user_id', $user->id)->findOrFail($id);
             }
-            
+
+            // Transform the order using the resource and convert to array for the view
+            $orderResource = (new OrderViewResource($order))->toArray();
+
             return \Inertia\Inertia::render('Orders/Show', [
-                'order' => $order
+                'order' => $orderResource
             ]);
             
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {

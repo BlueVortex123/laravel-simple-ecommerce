@@ -41,6 +41,7 @@ const orderTotal = computed(() => {
 </script>
 
 <template>
+
   <Head :title="`Order ${order.order_number}`" />
 
   <AuthenticatedLayout>
@@ -74,12 +75,12 @@ const orderTotal = computed(() => {
         </div>
         <div class="flex flex-col sm:flex-row gap-3 mt-4 lg:mt-0">
           <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border"
-                :class="getStatusBadgeClass(order.status)">
+            :class="getStatusBadgeClass(order.status)">
             <component :is="getStatusIcon(order.status)" class="w-4 h-4 mr-2" />
             {{ order.status.charAt(0).toUpperCase() + order.status.slice(1) }}
           </span>
           <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border"
-                :class="getPaymentStatusBadgeClass(order.payment_status)">
+            :class="getPaymentStatusBadgeClass(order.payment_status)">
             <CreditCardIcon class="w-4 h-4 mr-2" />
             {{ order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1) }}
           </span>
@@ -100,12 +101,13 @@ const orderTotal = computed(() => {
           </div>
           <div class="p-6">
             <div class="space-y-4">
-              <div v-for="item in order.order_items" :key="item.id" 
-                   class="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
+              <div v-for="item in order.order_items" :key="item.id"
+                class="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
                 <div class="flex-shrink-0">
-                  <img :src="`/storage/${item.product_snapshot?.image || item.product?.image || 'products/placeholder.jpg'}`" 
-                       :alt="item.product_snapshot?.name || item.product?.name"
-                       class="w-16 h-16 object-cover rounded-lg bg-gray-200">
+                  <img
+                    :src="`/storage/${item.product_snapshot?.image || item.product?.image || 'products/placeholder.jpg'}`"
+                    :alt="item.product_snapshot?.name || item.product?.name"
+                    class="w-16 h-16 object-cover rounded-lg bg-gray-200">
                 </div>
                 <div class="flex-1">
                   <h3 class="font-medium text-gray-900">
@@ -201,7 +203,7 @@ const orderTotal = computed(() => {
               <div class="flex justify-between">
                 <span class="text-gray-600">Status:</span>
                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                      :class="getPaymentStatusBadgeClass(order.payment_status)">
+                  :class="getPaymentStatusBadgeClass(order.payment_status)">
                   {{ order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1) }}
                 </span>
               </div>
@@ -222,8 +224,10 @@ const orderTotal = computed(() => {
               <p class="font-medium">{{ order.shipping_address.first_name }} {{ order.shipping_address.last_name }}</p>
               <p v-if="order.shipping_address.company" class="text-gray-600">{{ order.shipping_address.company }}</p>
               <p class="text-gray-600">{{ order.shipping_address.address_line_1 }}</p>
-              <p v-if="order.shipping_address.address_line_2" class="text-gray-600">{{ order.shipping_address.address_line_2 }}</p>
-              <p class="text-gray-600">{{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.postal_code }}</p>
+              <p v-if="order.shipping_address.address_line_2" class="text-gray-600">{{
+                order.shipping_address.address_line_2 }}</p>
+              <p class="text-gray-600">{{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{
+                order.shipping_address.postal_code }}</p>
               <p class="text-gray-600">{{ order.shipping_address.country }}</p>
               <p v-if="order.shipping_address.phone" class="text-gray-600">{{ order.shipping_address.phone }}</p>
             </div>
@@ -238,27 +242,16 @@ const orderTotal = computed(() => {
               Order Timeline
             </h2>
           </div>
+
           <div class="p-6">
             <div class="space-y-4">
-              <div class="flex items-start space-x-3">
-                <div class="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+              <div v-for="line in order.order_statuses_values" :key="line.id" class="flex items-start space-x-3">
+                <div :class="`${getStatusBadgeClass(line.value)} w-2 h-2 rounded-full mt-2`"></div>
                 <div class="flex-1">
-                  <p class="text-sm font-medium text-gray-900">Order Placed</p>
-                  <p class="text-xs text-gray-600">{{ formatDate(order.created_at) }}</p>
-                </div>
-              </div>
-              <div v-if="order.shipped_at" class="flex items-start space-x-3">
-                <div class="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                <div class="flex-1">
-                  <p class="text-sm font-medium text-gray-900">Shipped</p>
-                  <p class="text-xs text-gray-600">{{ formatDate(order.shipped_at) }}</p>
-                </div>
-              </div>
-              <div v-if="order.delivered_at" class="flex items-start space-x-3">
-                <div class="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                <div class="flex-1">
-                  <p class="text-sm font-medium text-gray-900">Delivered</p>
-                  <p class="text-xs text-gray-600">{{ formatDate(order.delivered_at) }}</p>
+                  <p class="text-sm font-medium text-gray-900">
+                    {{ line.value }}
+                  </p>
+                  <p class="text-xs text-gray-600">{{ formatDate(line.created_at) }}</p>
                 </div>
               </div>
             </div>
